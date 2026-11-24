@@ -53,6 +53,27 @@ jobs:
       - name: Generate Android project
         run: flutter create --platforms=android --org com.amora.app --project-name amora .
 
+      - name: Add Android runtime permissions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          permissions = [
+            "android.permission.INTERNET",
+            "android.permission.CAMERA",
+            "android.permission.RECORD_AUDIO",
+            "android.permission.READ_MEDIA_IMAGES",
+            "android.permission.READ_MEDIA_VIDEO",
+            "android.permission.POST_NOTIFICATIONS",
+          ]
+          missing = [x for x in permissions if f'name="{x}"' not in s]
+          block = "".join(f'    <uses-permission android:name="{x}" />\\n' for x in missing)
+          s = s.replace("<application", block + "    <application", 1)
+          p.write_text(s)
+          PY
+
       - name: Install dependencies and run checks
         run: |
           flutter pub get
@@ -158,6 +179,23 @@ jobs:
 
       - name: Generate iOS project
         run: flutter create --platforms=ios --org com.amora.app --project-name amora .
+
+      - name: Add iOS media privacy descriptions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import plistlib
+          from pathlib import Path
+          p = Path("ios/Runner/Info.plist")
+          data = plistlib.loads(p.read_bytes())
+          data.update({
+            "NSCameraUsageDescription": "AMORA uses your camera when you choose to take a profile photo or share a Moment.",
+            "NSPhotoLibraryUsageDescription": "AMORA needs photo library access so you can select profile photos and Moments.",
+            "NSPhotoLibraryAddUsageDescription": "AMORA can save media you choose to keep on your device.",
+            "NSMicrophoneUsageDescription": "AMORA uses your microphone only when you choose a voice or video feature.",
+          })
+          p.write_bytes(plistlib.dumps(data))
+          PY
 
       - name: Install dependencies and analyze
         run: |
