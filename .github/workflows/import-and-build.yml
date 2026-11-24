@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - "AMORA_Final_Release_Candidate_Fixed.zip"
+      - ".github/workflows/import-and-build.yml"
   workflow_dispatch:
 
 permissions:
