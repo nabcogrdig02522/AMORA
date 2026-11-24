@@ -63,6 +63,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Replace generated counter test with AMORA smoke test
+        run: |
+          mkdir -p test
+          cat > test/widget_test.dart <<'EOF'
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:amora/main.dart';
+
+          void main() {
+            testWidgets('AMORA setup screen renders', (WidgetTester tester) async {
+              await tester.pumpWidget(const AmoraApp(configured: false));
+              expect(find.text('Welcome to AMORA'), findsOneWidget);
+            });
+          }
+          EOF
+
       - name: Analyze and test
         run: |
           flutter analyze
