@@ -1,0 +1,89 @@
+name: Import AMORA source and build Android APK
+on:
+  push:
+    paths:
+      - "AMORA_Final_Release_Candidate_Fixed.zip"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract AMORA source archive into repository root
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE="AMORA_Final_Release_Candidate_Fixed.zip"
+          if [ ! -f "$ARCHIVE" ]; then
+            echo "Upload AMORA_Final_Release_Candidate_Fixed.zip to the repository root, then rerun this workflow."
+            exit 1
+          fi
+          unzip -q "$ARCHIVE" -d /tmp/amora-import
+          SOURCE="/tmp/amora-import/AMORA_Final_Release_Candidate"
+          test -f "$SOURCE/pubspec.yaml"
+          cp -a "$SOURCE/." .
+          rm -rf "$ARCHIVE" /tmp/amora-import
+
+      - name: Commit extracted source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Import corrected AMORA release candidate source"
+            git push
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Configure Supabase environment
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
+            echo "AMORA backend configuration: supplied"
+          else
+            cp .env.example .env
+            echo "AMORA backend configuration: not supplied; APK will open in setup mode"
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze and test
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Generate Android project
+        run: flutter create --platforms=android --org com.amora.app --project-name amora .
+
+      - name: Build QA APK
+        run: flutter build apk --release
+
+      - name: Upload QA APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: amora-android-release-qa
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
