@@ -115,13 +115,16 @@ jobs:
           cd android
           ./gradlew --no-daemon :app:assembleRelease
           cd ..
-          mkdir -p build/app/outputs/flutter-apk
-          APK_PATH="$(find build -type f -path '*/outputs/apk/release/*.apk' | head -n 1)"
-          if [ -z "$APK_PATH" ]; then
-            echo "Gradle completed but no release APK was found."
-            find build -maxdepth 7 -type f | sort | tail -100
+          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK_PATH" ]; then
+            APK_PATH="$(find android -type f -path '*/outputs/apk/release/*.apk' | head -n 1)"
+          fi
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "Gradle completed but no release APK was found in the Android module."
+            find android -type f -name '*.apk' -print
             exit 1
           fi
+          mkdir -p build/app/outputs/flutter-apk
           cp "$APK_PATH" build/app/outputs/flutter-apk/app-release.apk
           ls -lh build/app/outputs/flutter-apk/app-release.apk
 
