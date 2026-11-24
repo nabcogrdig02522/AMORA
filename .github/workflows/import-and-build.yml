@@ -32,16 +32,6 @@ jobs:
           cp -a "$SOURCE/." .
           rm -rf "$ARCHIVE" /tmp/amora-import
 
-      - name: Commit extracted source
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Import corrected AMORA release candidate source"
-            git push
-          fi
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -59,12 +49,15 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
-            printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
+            printf 'SUPABASE_URL=%s\\nSUPABASE_ANON_KEY=%s\\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
             echo "AMORA backend configuration: supplied"
           else
             cp .env.example .env
-            echo "AMORA backend configuration: not supplied; APK will open in setup mode"
+            echo "AMORA backend configuration: not supplied; APK will not connect to a live backend"
           fi
+
+      - name: Generate Android project
+        run: flutter create --platforms=android --org com.amora.app --project-name amora .
 
       - name: Install dependencies
         run: flutter pub get
@@ -73,9 +66,6 @@ jobs:
         run: |
           flutter analyze
           flutter test
-
-      - name: Generate Android project
-        run: flutter create --platforms=android --org com.amora.app --project-name amora .
 
       - name: Build QA APK
         run: flutter build apk --release
@@ -87,3 +77,17 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Commit imported source and generated Android project
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          # The GitHub App token is not granted the separate "workflows" permission.
+          # Keep the secondary Flutter workflow out of this push; this build runs here.
+          git reset -q -- .github/workflows/flutter.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "Import AMORA release candidate and Android project"
+            git push
+          fi
