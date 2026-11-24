@@ -197,10 +197,25 @@ jobs:
           p.write_bytes(plistlib.dumps(data))
           PY
 
+      - name: Replace generated counter test with AMORA smoke test
+        run: |
+          mkdir -p test
+          cat > test/widget_test.dart <<'EOF'
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:amora/main.dart';
+          void main() {
+            testWidgets('AMORA setup screen renders', (WidgetTester tester) async {
+              await tester.pumpWidget(const AmoraApp(configured: false));
+              expect(find.text('Welcome to AMORA'), findsOneWidget);
+            });
+          }
+          EOF
+
       - name: Install dependencies and analyze
         run: |
           flutter pub get
           flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test
 
       - name: Build unsigned iOS app
         run: flutter build ios --release --no-codesign
