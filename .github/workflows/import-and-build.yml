@@ -53,7 +53,7 @@ jobs:
       - name: Configure Supabase environment
         env:
           SUPABASE_URL: https://nauelfmujzzodqqejqpv.supabase.co
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_ANON_KEY: sb_publishable_XTaNom4pKroqKwSQY6RyDQ_1JbOWivg
         run: |
           test -n "$SUPABASE_URL" || { echo "::error::Supabase URL is missing."; exit 1; }
           test -n "$SUPABASE_ANON_KEY" || { echo "::error::SUPABASE_ANON_KEY repository secret is missing; refusing to build a disconnected app."; exit 1; }
@@ -218,7 +218,7 @@ jobs:
       - name: Configure Supabase environment
         env:
           SUPABASE_URL: https://nauelfmujzzodqqejqpv.supabase.co
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_ANON_KEY: sb_publishable_XTaNom4pKroqKwSQY6RyDQ_1JbOWivg
         run: |
           test -n "$SUPABASE_URL" || { echo "::error::Supabase URL is missing."; exit 1; }
           test -n "$SUPABASE_ANON_KEY" || { echo "::error::SUPABASE_ANON_KEY repository secret is missing; refusing to build a disconnected app."; exit 1; }
