@@ -30,6 +30,54 @@ jobs:
           unzip -q "$SOURCE_ARCHIVE" -d /tmp/amora-import
           cp -a /tmp/amora-import/AMORA_Final_Release_Candidate/. .
           rm -rf /tmp/amora-import
+          # Patch the imported Sprint 3 auth screen, not the inactive repository root.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("lib/screens/auth_screen.dart")
+          s = p.read_text()
+          import_line = "import 'package:supabase_flutter/supabase_flutter.dart';"
+          app_import = "import 'screens/app_shell.dart';"
+          if app_import not in s:
+              if import_line not in s:
+                  raise SystemExit("Supabase import not found; refusing auth patch.")
+              s = s.replace(import_line, import_line + "\\n" + app_import, 1)
+          old = """        await auth.signUp(
+          email: email.text.trim(),
+          password: password.text,
+          data: {
+            'display_name': displayName.text.trim(),
+            'date_of_birth': '${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}',
+            'gender': 'Prefer to discuss',
+          },
+        );
+        message = 'Account created. Check your email if confirmation is enabled, then sign in.';
+        creatingAccount = false;"""
+          new = """        final response = await auth.signUp(
+          email: email.text.trim(),
+          password: password.text,
+          data: {
+            'display_name': displayName.text.trim(),
+            'date_of_birth': '${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}',
+            'gender': 'Prefer to discuss',
+          },
+        );
+        if (response.session != null && mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AppShell()),
+            (route) => false,
+          );
+          return;
+        }
+        message = 'Account created, but no sign-in session was returned. Email confirmation may still be enabled in Supabase.';
+        creatingAccount = false;"""
+          if old not in s:
+              raise SystemExit("Expected sign-up handler not found; refusing to patch an unexpected source version.")
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          if "response.session != null" not in s or "const AppShell()" not in s:
+              raise SystemExit("Direct-entry auth patch verification failed.")
+          print("Verified: sign-up routes directly to AppShell when Supabase returns a session.")
+          PY
           echo "--- AUTH SOURCE FOR REGISTRATION PATCH REVIEW ---"
           sed -n '1,240p' lib/screens/auth_screen.dart
           echo "--- END AUTH SOURCE ---"
@@ -210,6 +258,54 @@ jobs:
           unzip -q "$SOURCE_ARCHIVE" -d /tmp/amora-import
           cp -a /tmp/amora-import/AMORA_Final_Release_Candidate/. .
           rm -rf /tmp/amora-import
+          # Patch the imported Sprint 3 auth screen, not the inactive repository root.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("lib/screens/auth_screen.dart")
+          s = p.read_text()
+          import_line = "import 'package:supabase_flutter/supabase_flutter.dart';"
+          app_import = "import 'screens/app_shell.dart';"
+          if app_import not in s:
+              if import_line not in s:
+                  raise SystemExit("Supabase import not found; refusing auth patch.")
+              s = s.replace(import_line, import_line + "\\n" + app_import, 1)
+          old = """        await auth.signUp(
+          email: email.text.trim(),
+          password: password.text,
+          data: {
+            'display_name': displayName.text.trim(),
+            'date_of_birth': '${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}',
+            'gender': 'Prefer to discuss',
+          },
+        );
+        message = 'Account created. Check your email if confirmation is enabled, then sign in.';
+        creatingAccount = false;"""
+          new = """        final response = await auth.signUp(
+          email: email.text.trim(),
+          password: password.text,
+          data: {
+            'display_name': displayName.text.trim(),
+            'date_of_birth': '${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}',
+            'gender': 'Prefer to discuss',
+          },
+        );
+        if (response.session != null && mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AppShell()),
+            (route) => false,
+          );
+          return;
+        }
+        message = 'Account created, but no sign-in session was returned. Email confirmation may still be enabled in Supabase.';
+        creatingAccount = false;"""
+          if old not in s:
+              raise SystemExit("Expected sign-up handler not found; refusing to patch an unexpected source version.")
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          if "response.session != null" not in s or "const AppShell()" not in s:
+              raise SystemExit("Direct-entry auth patch verification failed.")
+          print("Verified: sign-up routes directly to AppShell when Supabase returns a session.")
+          PY
           echo "Building source archive: $SOURCE_ARCHIVE"
           if [ "$SOURCE_ARCHIVE" = "AMORA_Litgo_Integration_Sprint3.zip" ]; then
             for migration in 20261201_social_engagement.sql 20261202_moments_media_interactions.sql 20261203_virtual_gifts_leaderboard.sql; do
