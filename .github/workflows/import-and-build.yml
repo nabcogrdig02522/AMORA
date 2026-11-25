@@ -24,14 +24,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -f AMORA_Litgo_Integration_Sprint3.zip ]; then
-            SOURCE_ARCHIVE="AMORA_Litgo_Integration_Sprint3.zip"
-            echo "AMORA_SOURCE_VARIANT=litgo-sprint3" >> "$GITHUB_ENV"
-          else
-            SOURCE_ARCHIVE="AMORA_Final_Release_Candidate_Fixed.zip"
-            echo "AMORA_SOURCE_VARIANT=baseline" >> "$GITHUB_ENV"
-            echo "::warning::Sprint 3 source archive is not yet in the repository; this run will build the baseline app."
-          fi
+          SOURCE_ARCHIVE="AMORA_Litgo_Integration_Sprint3.zip"
+          test -f "$SOURCE_ARCHIVE" || { echo "::error::Sprint 3 source archive is required; refusing to build the incomplete baseline app."; exit 1; }
+          echo "AMORA_SOURCE_VARIANT=litgo-sprint3" >> "$GITHUB_ENV"
           unzip -q "$SOURCE_ARCHIVE" -d /tmp/amora-import
           cp -a /tmp/amora-import/AMORA_Final_Release_Candidate/. .
           rm -rf /tmp/amora-import
@@ -57,15 +52,12 @@ jobs:
 
       - name: Configure Supabase environment
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://nauelfmujzzodqqejqpv.supabase.co
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
-            printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
-          else
-            cp .env.example .env
-            echo "WARNING: No live Supabase credentials; this is a UI/QA build."
-          fi
+          test -n "$SUPABASE_URL" || { echo "::error::Supabase URL is missing."; exit 1; }
+          test -n "$SUPABASE_ANON_KEY" || { echo "::error::SUPABASE_ANON_KEY repository secret is missing; refusing to build a disconnected app."; exit 1; }
+          printf 'SUPABASE_URL=%s\\nSUPABASE_ANON_KEY=%s\\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
 
       - name: Generate Android project
         run: flutter create --platforms=android --org com.amora.app --project-name amora .
@@ -153,18 +145,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Commit imported source and Android project
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git reset -q -- .github/workflows/flutter.yml || true
-          if ! git diff --cached --quiet; then
-            git commit -m "Import AMORA source and Android QA project"
-            git push
-          fi
-
   ios:
     name: iOS unsigned device build
     runs-on: macos-15
@@ -176,14 +156,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -f AMORA_Litgo_Integration_Sprint3.zip ]; then
-            SOURCE_ARCHIVE="AMORA_Litgo_Integration_Sprint3.zip"
-            echo "AMORA_SOURCE_VARIANT=litgo-sprint3" >> "$GITHUB_ENV"
-          else
-            SOURCE_ARCHIVE="AMORA_Final_Release_Candidate_Fixed.zip"
-            echo "AMORA_SOURCE_VARIANT=baseline" >> "$GITHUB_ENV"
-            echo "::warning::Sprint 3 source archive is not yet in the repository; this run will build the baseline app."
-          fi
+          SOURCE_ARCHIVE="AMORA_Litgo_Integration_Sprint3.zip"
+          test -f "$SOURCE_ARCHIVE" || { echo "::error::Sprint 3 source archive is required; refusing to build the incomplete baseline app."; exit 1; }
+          echo "AMORA_SOURCE_VARIANT=litgo-sprint3" >> "$GITHUB_ENV"
           unzip -q "$SOURCE_ARCHIVE" -d /tmp/amora-import
           cp -a /tmp/amora-import/AMORA_Final_Release_Candidate/. .
           rm -rf /tmp/amora-import
@@ -203,15 +178,12 @@ jobs:
 
       - name: Configure Supabase environment
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://nauelfmujzzodqqejqpv.supabase.co
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
-            printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
-          else
-            cp .env.example .env
-            echo "WARNING: No live Supabase credentials; this is a UI/QA build."
-          fi
+          test -n "$SUPABASE_URL" || { echo "::error::Supabase URL is missing."; exit 1; }
+          test -n "$SUPABASE_ANON_KEY" || { echo "::error::SUPABASE_ANON_KEY repository secret is missing; refusing to build a disconnected app."; exit 1; }
+          printf 'SUPABASE_URL=%s\\nSUPABASE_ANON_KEY=%s\\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
 
       - name: Generate iOS project
         run: flutter create --platforms=ios --org com.amora.app --project-name amora .
