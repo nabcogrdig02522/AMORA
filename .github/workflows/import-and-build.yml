@@ -33,6 +33,12 @@ jobs:
           echo "--- AUTH SOURCE FOR REGISTRATION PATCH REVIEW ---"
           sed -n '1,240p' lib/screens/auth_screen.dart
           echo "--- END AUTH SOURCE ---"
+          echo "--- MAIN SOURCE ---"
+          sed -n "1,260p" lib/main.dart
+          echo "--- END MAIN SOURCE ---"
+          echo "--- AUTH REFERENCES ---"
+          grep -R -n -E "AuthScreen|onAuthStateChange|currentSession|AppShell|Navigator" lib/main.dart lib/screens/app_shell.dart lib 2>/dev/null | head -160 || true
+          echo "--- END AUTH REFERENCES ---"
           echo "Building source archive: $SOURCE_ARCHIVE"
           if [ "$SOURCE_ARCHIVE" = "AMORA_Litgo_Integration_Sprint3.zip" ]; then
             for migration in 20261201_social_engagement.sql 20261202_moments_media_interactions.sql 20261203_virtual_gifts_leaderboard.sql; do
