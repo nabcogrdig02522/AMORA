@@ -57,7 +57,7 @@ jobs:
         run: |
           test -n "$SUPABASE_URL" || { echo "::error::Supabase URL is missing."; exit 1; }
           test -n "$SUPABASE_ANON_KEY" || { echo "::error::SUPABASE_ANON_KEY repository secret is missing; refusing to build a disconnected app."; exit 1; }
-          printf 'SUPABASE_URL=%s\\nSUPABASE_ANON_KEY=%s\\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
+          printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
 
       - name: Generate Android project
         run: flutter create --platforms=android --org com.amora.app --project-name amora .
@@ -222,7 +222,7 @@ jobs:
         run: |
           test -n "$SUPABASE_URL" || { echo "::error::Supabase URL is missing."; exit 1; }
           test -n "$SUPABASE_ANON_KEY" || { echo "::error::SUPABASE_ANON_KEY repository secret is missing; refusing to build a disconnected app."; exit 1; }
-          printf 'SUPABASE_URL=%s\\nSUPABASE_ANON_KEY=%s\\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
+          printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
 
       - name: Generate iOS project
         run: flutter create --platforms=ios --org com.amora.app --project-name amora .
