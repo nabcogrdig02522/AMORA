@@ -30,6 +30,9 @@ jobs:
           unzip -q "$SOURCE_ARCHIVE" -d /tmp/amora-import
           cp -a /tmp/amora-import/AMORA_Final_Release_Candidate/. .
           rm -rf /tmp/amora-import
+          echo "--- AUTH SOURCE FOR REGISTRATION PATCH REVIEW ---"
+          sed -n '1,240p' lib/screens/auth_screen.dart
+          echo "--- END AUTH SOURCE ---"
           echo "Building source archive: $SOURCE_ARCHIVE"
           if [ "$SOURCE_ARCHIVE" = "AMORA_Litgo_Integration_Sprint3.zip" ]; then
             for migration in 20261201_social_engagement.sql 20261202_moments_media_interactions.sql 20261203_virtual_gifts_leaderboard.sql; do
