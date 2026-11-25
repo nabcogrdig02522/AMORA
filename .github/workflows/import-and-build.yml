@@ -83,6 +83,45 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Repair gift leaderboard Dart syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("lib/screens/gift_economy_screen.dart")
+          s = p.read_text()
+          pattern = r"          return Card\(child:Column\(children:List\.generate\(rows\.length,\(i\)\{.*?          \}\)\)\),"
+          replacement = """          return Card(
+            child: Column(
+              children: [
+                for (var i = 0; i < rows.length; i++)
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: (rows[i]['photo_url']?.toString() ?? '').startsWith('http')
+                          ? NetworkImage(rows[i]['photo_url'].toString())
+                          : null,
+                      child: (rows[i]['photo_url']?.toString() ?? '').startsWith('http')
+                          ? null
+                          : Text('${i + 1}'),
+                    ),
+                    title: Text('${rows[i]['display_name']}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('${rows[i]['gifts_received']} gifts received'),
+                    trailing: Text(
+                      '${rows[i]['points_received']} pts',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7B2348)),
+                    ),
+                  ),
+              ],
+            ),
+          );"""
+          updated, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit("Could not locate the malformed gift leaderboard widget; refusing to continue.")
+          p.write_text(updated)
+          PY
+          dart format lib/screens/gift_economy_screen.dart
+
       - name: Install dependencies and run checks
         run: |
           flutter pub get
@@ -218,6 +257,45 @@ jobs:
             });
           }
           EOF
+
+      - name: Repair gift leaderboard Dart syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("lib/screens/gift_economy_screen.dart")
+          s = p.read_text()
+          pattern = r"          return Card\(child:Column\(children:List\.generate\(rows\.length,\(i\)\{.*?          \}\)\)\),"
+          replacement = """          return Card(
+            child: Column(
+              children: [
+                for (var i = 0; i < rows.length; i++)
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: (rows[i]['photo_url']?.toString() ?? '').startsWith('http')
+                          ? NetworkImage(rows[i]['photo_url'].toString())
+                          : null,
+                      child: (rows[i]['photo_url']?.toString() ?? '').startsWith('http')
+                          ? null
+                          : Text('${i + 1}'),
+                    ),
+                    title: Text('${rows[i]['display_name']}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('${rows[i]['gifts_received']} gifts received'),
+                    trailing: Text(
+                      '${rows[i]['points_received']} pts',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7B2348)),
+                    ),
+                  ),
+              ],
+            ),
+          );"""
+          updated, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit("Could not locate the malformed gift leaderboard widget; refusing to continue.")
+          p.write_text(updated)
+          PY
+          dart format lib/screens/gift_economy_screen.dart
 
       - name: Install dependencies and analyze
         run: |
