@@ -40,7 +40,7 @@ jobs:
           if app_import not in s:
               if import_line not in s:
                   raise SystemExit("Supabase import not found; refusing auth patch.")
-              s = s.replace(import_line, import_line + "\\n" + app_import, 1)
+              s = s.replace(import_line, import_line + "\n" + app_import, 1)
           old = """        await auth.signUp(
           email: email.text.trim(),
           password: password.text,
